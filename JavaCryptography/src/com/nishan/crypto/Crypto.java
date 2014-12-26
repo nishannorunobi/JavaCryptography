@@ -17,12 +17,11 @@ public abstract class Crypto {
 	protected SecretKey secretKey;
 	protected SecretKey sessionKey;
 	protected Cipher cipher;
-	protected final String RSA_ALGORITHM = "RSA";
-	//protected final String RSA_CIPHER_ALGORITHM = "RSA/CBC/PKCS5Padding";
-	protected final int RSA_KEY_LENGTH =2048;
-	protected final String DES_ALGORITHM = "DESede";
-	protected final String DES_CIPHER_ALGORITHM = "DESede/CBC/PKCS5Padding";
-	protected final int DES_KEY_LENGTH = 168;
+	protected final static String RSA_ALGORITHM = "RSA";
+	public final static int RSA_KEY_LENGTH =2048;
+	public final static String DES_ALGORITHM = "DESede";
+	public final static String DES_CIPHER_ALGORITHM = "DESede/CBC/PKCS5Padding";
+	public final static int DES_KEY_LENGTH = 168;
 	private static Message requestMessage;
 	private static Message responseMessage;
 	
