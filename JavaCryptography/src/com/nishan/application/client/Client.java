@@ -44,7 +44,7 @@ public final class Client extends Crypto{
 				generateKeyPair();
 				break;
 			case 2:
-				generateSecretKey();
+				generateSecretKey(Constants.CLIENT_SECRET_KEY_LOCATION);
 				break;
 			case 3:
 				readSharedPublicKey();
@@ -92,19 +92,8 @@ public final class Client extends Crypto{
 		}
 	}
 
-	private void generateSecretKey() {
-		this.secretKey = ApplicationUtil.generateSecretKey(DES_ALGORITHM, DES_KEY_LENGTH);
-		byte[] encodedSecretKey = secretKey.getEncoded();
-		ApplicationUtil.saveKeyToFileKey(Constants.CLIENT_SECRET_KEY_LOCATION,encodedSecretKey);
-	}
-
 	private void generateKeyPair() {
-		this.publicKey = ApplicationUtil.generatePublicKey(RSA_ALGORITHM,RSA_KEY_LENGTH);
-		byte[] encodedPublicKey = publicKey.getEncoded();
-		ApplicationUtil.saveKeyToFileKey(Constants.CLIENT_PUBLIC_KEY_LOCATION, encodedPublicKey);
-		this.privateKey = ApplicationUtil.generatePrivateKey(RSA_ALGORITHM,RSA_KEY_LENGTH);
-		byte[] encodedPrivateKey = privateKey.getEncoded();
-		ApplicationUtil.saveKeyToFileKey(Constants.CLIENT_PRIVATE_KEY_LOCATION, encodedPrivateKey);
+		generatePublicPrivateKey(Constants.CLIENT_PUBLIC_KEY_LOCATION,Constants.CLIENT_PRIVATE_KEY_LOCATION);
 	}
 
 	@Override

@@ -1,8 +1,6 @@
 package com.nishan.application.server;
 
 import java.security.InvalidKeyException;
-import java.security.Key;
-import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.Scanner;
 
@@ -45,7 +43,7 @@ public final class Server extends Crypto{
 				generateKeyPair();
 				break;
 			case 2:
-				generateSecretKey();
+				generateSecretKey(Constants.SERVER_SECRET_KEY_LOCATION);
 				break;
 			case 5:
 				receiveSessionKey();
@@ -58,22 +56,8 @@ public final class Server extends Crypto{
 		}
 	}
 
-	private void generateSecretKey() {
-		this.secretKey = ApplicationUtil.generateSecretKey(DES_ALGORITHM, DES_KEY_LENGTH);
-		byte[] encodedSecretKey = secretKey.getEncoded();
-		ApplicationUtil.saveKeyToFileKey(Constants.SERVER_SECRET_KEY_LOCATION, encodedSecretKey);
-	}
-
 	private void generateKeyPair() {
-		Key[] keyArray = ApplicationUtil.get();
-		//this.publicKey = ApplicationUtil.generatePublicKey(RSA_ALGORITHM,RSA_KEY_LENGTH);
-		this.publicKey = (PublicKey) keyArray[0];
-		byte[] encodedPublicKey = publicKey.getEncoded();
-		ApplicationUtil.saveKeyToFileKey(Constants.SERVER_PUBLIC_KEY_LOCATION, encodedPublicKey);
-		//this.privateKey = ApplicationUtil.generatePrivateKey(RSA_ALGORITHM,RSA_KEY_LENGTH);
-		this.privateKey = (PrivateKey) keyArray[1];
-		byte[] encodedPrivateKey = privateKey.getEncoded();
-		ApplicationUtil.saveKeyToFileKey(Constants.SERVER_PRIVATE_KEY_LOCATION, encodedPrivateKey);
+		generatePublicPrivateKey(Constants.SERVER_PUBLIC_KEY_LOCATION,Constants.SERVER_PRIVATE_KEY_LOCATION);
 	}
 
 	@Override
@@ -88,7 +72,6 @@ public final class Server extends Crypto{
 	public void receiveSessionKey() {
 		byte[] encryptedSessionKey = ApplicationUtil.readFileContent(Constants.ENCRYPTED_SESSION_KEY_LOCATION);
 		try {
-			PrivateKey prKey = ApplicationUtil.generatePrivateKey("RSA", 2048);
 			cipher.init(Cipher.DECRYPT_MODE, privateKey);
 		} catch (InvalidKeyException e) {
 			e.printStackTrace();

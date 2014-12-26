@@ -1,9 +1,14 @@
 package com.nishan.crypto;
 
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 
 import javax.crypto.Cipher;
+import javax.crypto.KeyGenerator;
+import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 
 public abstract class Crypto {
@@ -15,9 +20,9 @@ public abstract class Crypto {
 	protected final String RSA_ALGORITHM = "RSA";
 	//protected final String RSA_CIPHER_ALGORITHM = "RSA/CBC/PKCS5Padding";
 	protected final int RSA_KEY_LENGTH =2048;
-	protected final String DES_ALGORITHM = "DES";
+	protected final String DES_ALGORITHM = "DESede";
 	protected final String DES_CIPHER_ALGORITHM = "DESede/CBC/PKCS5Padding";
-	protected final int DES_KEY_LENGTH = 56;
+	protected final int DES_KEY_LENGTH = 168;
 	private static Message requestMessage;
 	private static Message responseMessage;
 	
@@ -59,7 +64,45 @@ public abstract class Crypto {
 	}
 	
 	protected void init() {
-		cipher = ApplicationUtil.initializeCipher(DES_CIPHER_ALGORITHM);
+		try {
+			cipher = Cipher.getInstance(DES_CIPHER_ALGORITHM);
+		} catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
+			e.printStackTrace();
+		}
 		showMenu();
+	}
+	
+	protected void generatePublicPrivateKey(String publicKeyLocation,String privateKeyLocation){
+		KeyPairGenerator keyGen = null;
+		try {
+			keyGen = KeyPairGenerator.getInstance(RSA_ALGORITHM);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		keyGen.initialize(RSA_KEY_LENGTH);
+		KeyPair keyPair = keyGen.genKeyPair();
+		this.publicKey = keyPair.getPublic();
+		this.privateKey = keyPair.getPrivate();
+		
+		///////save in file
+		byte[] encodedPublicKey = publicKey.getEncoded();
+		ApplicationUtil.saveKeyToFileKey(publicKeyLocation, encodedPublicKey);
+		
+		byte[] encodedPrivateKey = privateKey.getEncoded();
+		ApplicationUtil.saveKeyToFileKey(privateKeyLocation, encodedPrivateKey);
+	}
+	
+	protected void generateSecretKey(String locationToSaveKey) {
+		KeyGenerator keyGenerator = null;
+		try {
+			keyGenerator = KeyGenerator.getInstance(DES_ALGORITHM);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		keyGenerator.init(DES_KEY_LENGTH);
+		this.secretKey = keyGenerator.generateKey();
+		byte[] encodedSecretKey = secretKey.getEncoded();
+		ApplicationUtil.saveKeyToFileKey(locationToSaveKey,encodedSecretKey);
 	}
 }
