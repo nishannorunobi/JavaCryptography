@@ -60,10 +60,14 @@ public final class Client extends Crypto{
 				menu.set(5, "");
 				break;
 			case 6:
-				sendMessageToServer();
+				putSendMessageToSend(Constants.CLIENT_PLAIN_TEXT_LOCATION);
 				break;
 			case 7:
-				receiveMessageFromServer();
+				digestAndSendMessage(Constants.CLIENT_DIGESTED_TEXT_LOCATION);
+				break;
+			case 8:
+				receiveMessageDigested(Constants.CLIENT_PLAIN_TEXT_LOCATION,Constants.CLIENT_DIGESTED_TEXT_LOCATION);
+				break;
 			default:
 				break;
 			}
@@ -72,7 +76,7 @@ public final class Client extends Crypto{
 		}
 	}
 
-	private void sendMessageToServer() {
+	/*private void sendMessageToServer() {
 		try {
 			cipher = Cipher.getInstance(DES_CIPHER_ALGORITHM);
 			System.out.print("type :");
@@ -104,7 +108,7 @@ public final class Client extends Crypto{
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-	}
+	}*/
 
 	private void readSharedPublicKey() {
 		this.serverPublicKey = (PublicKey) ApplicationUtil.readSavedKey(Constants.SERVER_PUBLIC_KEY_LOCATION);
@@ -140,14 +144,10 @@ public final class Client extends Crypto{
 	@Override
 	protected void loadMyMenu() {
 		menu.add("3.Fetch Server public key");
-		//System.out.println("3.Fetch Server public key");
 		menu.add("4.Send secret key to Server");
-		//System.out.println("4.Send secret key to Server");
-		menu.add("5.Receive Session key of Client");
-		//System.out.println("5.Receive Session key of Client");
-		menu.add("6.Type and hit ENTER_KEY to send message to Server");
-		//System.out.println("6.Type and hit ENTER_KEY to send message to Server");
-		menu.add("7.Print message sent by Server");
-		//System.out.println("7.Print message sent by Server");
+		menu.add("5.Receive Session key of Server");
+		menu.add("6.Input the message to send to Server");
+		menu.add("7.Digest and send the given message to Server");
+		menu.add("8.Recieve and print message sent by Server");
 	}
 }

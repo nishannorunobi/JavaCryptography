@@ -1,11 +1,15 @@
 package com.nishan.crypto;
 
+import java.io.ByteArrayOutputStream;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Scanner;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
@@ -20,6 +24,7 @@ public abstract class Crypto {
 	protected SecretKey sessionKey;
 	protected Cipher cipher;
 	protected static final String DIGEST_ALGORITHM = "SHA-1";
+	protected static final int DIGESTED_MESSAGE_LENGTH = 20;
 	protected static final String RSA_ALGORITHM = "RSA";
 	public static final int RSA_KEY_LENGTH =2048;
 	public static final String DES_ALGORITHM = "DESede";
@@ -125,5 +130,88 @@ public abstract class Crypto {
 		this.secretKey = keyGenerator.generateKey();
 		byte[] encodedSecretKey = secretKey.getEncoded();
 		ApplicationUtil.saveKeyToFileKey(locationToSaveKey,encodedSecretKey);
+	}
+	
+	protected void putSendMessageToSend(String messageLocationToWrite) {
+		try {
+			//cipher = Cipher.getInstance(DES_CIPHER_ALGORITHM);
+			System.out.print("type :");
+			String srt = new Scanner(System.in).nextLine();
+			byte [] encodedStream = srt.getBytes();
+			ApplicationUtil.saveKeyToFileKey(messageLocationToWrite, encodedStream);
+			messageTosend = encodedStream;
+			/*if(sessionKey!= null){
+				cipher.init(Cipher.ENCRYPT_MODE, sessionKey,ivParameterSpec);		
+			}
+			byte[] encryptedText = cipher.doFinal(encodedStream);
+			ApplicationUtil.saveKeyToFileKey(Constants.ENCRYPTED_PLAIN_TEXT_LOCATION, encryptedText);*/
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	protected void digestAndSendMessage(String digestedMessageLocation) {
+		try{
+			byte[] digestedMessage = getDigest(messageTosend);
+			ApplicationUtil.saveKeyToFileKey(digestedMessageLocation, digestedMessage);
+			ByteArrayOutputStream stream = new ByteArrayOutputStream();
+			stream.write(digestedMessage);
+			stream.write(messageTosend);
+			
+			cipher = Cipher.getInstance(DES_CIPHER_ALGORITHM);
+			if(sessionKey!= null){
+				cipher.init(Cipher.ENCRYPT_MODE, sessionKey,ivParameterSpec);		
+			}
+			byte[] encryptedText = cipher.doFinal(stream.toByteArray());
+			ApplicationUtil.saveKeyToFileKey(Constants.ENCRYPTED_PLAIN_TEXT_LOCATION, encryptedText);
+			
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+	}
+	
+
+	protected void receiveMessageDigested( String receivedMessageLocation,String receiveDigestedLocation) {
+		try {
+			cipher = Cipher.getInstance(DES_CIPHER_ALGORITHM);
+			byte[] encryptedText = ApplicationUtil.readFileContent(Constants.ENCRYPTED_PLAIN_TEXT_LOCATION);
+			if(sessionKey!= null){
+				cipher.init(Cipher.DECRYPT_MODE, sessionKey,ivParameterSpec);
+			}
+			byte[] decryptedText = cipher.doFinal(encryptedText);
+			byte [] digestedReceivedMessage = new byte[DIGESTED_MESSAGE_LENGTH];
+			System.arraycopy(decryptedText, 0, digestedReceivedMessage, 0, DIGESTED_MESSAGE_LENGTH);
+			ApplicationUtil.saveKeyToFileKey(receiveDigestedLocation, digestedReceivedMessage);
+
+			int messageLen = decryptedText.length - DIGESTED_MESSAGE_LENGTH;
+			receivedMessage = new byte[messageLen];
+			System.arraycopy(decryptedText, DIGESTED_MESSAGE_LENGTH, receivedMessage, 0, messageLen);
+			ApplicationUtil.saveKeyToFileKey(receivedMessageLocation, receivedMessage);
+			
+			byte[] digest = getDigest(receivedMessage);
+			//if(digest != digestedReceivedMessage){
+			if(!Arrays.equals(digestedReceivedMessage, digest)){
+				// check integrity
+				System.err.println("Message is tempered");
+				return;
+			}
+			String str = new String(receivedMessage,"UTF-8");
+			System.out.print("received text: ");System.err.println(str);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	private byte[] getDigest(byte [] message){
+		byte[] digested = null;
+		try {
+			MessageDigest digest = MessageDigest.getInstance(DIGEST_ALGORITHM);
+			digest.update(message);
+			digested = digest.digest();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return digested;
 	}
 }

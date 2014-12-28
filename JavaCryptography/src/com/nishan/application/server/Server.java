@@ -1,7 +1,6 @@
 package com.nishan.application.server;
 
 import java.io.IOException;
-import java.security.MessageDigest;
 import java.security.PublicKey;
 import java.util.Scanner;
 
@@ -63,29 +62,19 @@ public final class Server extends Crypto{
 				menu.set(5, "");
 				break;
 			case 6:
-				sendMessageToClient();
+				putSendMessageToSend(Constants.SERVER_PLAIN_TEXT_LOCATION);
 				break;
 			case 7:
-				digestAndSendMessageToClient(messageTosend);
+				digestAndSendMessage(Constants.SERVER_DIGESTED_TEXT_LOCATION);
 				break;
 			case 8:
-				receiveMessageFromClient();
+				receiveMessageDigested(Constants.SERVER_PLAIN_TEXT_LOCATION,Constants.SERVER_DIGESTED_TEXT_LOCATION);
 				break;
 			default:
 				break;
 			}
 			finish();
 			showMenu();
-		}
-	}
-
-	private void digestAndSendMessageToClient(byte [] message) {
-		try{
-			MessageDigest messageDigest = MessageDigest.getInstance(DIGEST_ALGORITHM);
-			messageDigest.update(message);
-			byte[] digestedMessage = messageDigest.digest();
-		}catch(Exception e){
-			e.printStackTrace();
 		}
 	}
 
@@ -104,40 +93,6 @@ public final class Server extends Crypto{
 		}
 	}
 
-	private void sendMessageToClient() {
-		try {
-			cipher = Cipher.getInstance(DES_CIPHER_ALGORITHM);
-			System.out.print("type :");
-			String srt = new Scanner(System.in).nextLine();
-			byte [] encodedStream = srt.getBytes();
-			ApplicationUtil.saveKeyToFileKey(Constants.SERVER_PLAIN_TEXT_LOCATION, encodedStream);
-			if(sessionKey!= null){
-				cipher.init(Cipher.ENCRYPT_MODE, sessionKey,ivParameterSpec);		
-			}
-			byte[] encryptedText = cipher.doFinal(encodedStream);
-			ApplicationUtil.saveKeyToFileKey(Constants.ENCRYPTED_PLAIN_TEXT_LOCATION, encryptedText);
-
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-
-	private void receiveMessageFromClient() {
-		try {
-			cipher = Cipher.getInstance(DES_CIPHER_ALGORITHM);
-			byte[] encryptedText = ApplicationUtil.readFileContent(Constants.ENCRYPTED_PLAIN_TEXT_LOCATION);
-			if(sessionKey!= null){
-				cipher.init(Cipher.DECRYPT_MODE, sessionKey,ivParameterSpec);
-			}
-			byte[] decryptedText = cipher.doFinal(encryptedText);
-			String str = new String(decryptedText,"UTF-8");
-			System.out.print("received text: ");System.err.println(str);
-			ApplicationUtil.saveKeyToFileKey(Constants.SERVER_PLAIN_TEXT_LOCATION, decryptedText);			
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-
 	private void generateKeyPair() {
 		generatePublicPrivateKey(Constants.SERVER_PUBLIC_KEY_LOCATION,Constants.SERVER_PRIVATE_KEY_LOCATION);
 	}
@@ -149,7 +104,7 @@ public final class Server extends Crypto{
 		menu.add("5.Receive Session key of Client");
 		menu.add("6.Input the message to send to Client");
 		menu.add("7.Digest and send the given message to Client");
-		menu.add("8.Recieve message sent by Client");
+		menu.add("8.Recieve and print message sent by Client");
 	}
 
 	public void receiveSessionKey() {
