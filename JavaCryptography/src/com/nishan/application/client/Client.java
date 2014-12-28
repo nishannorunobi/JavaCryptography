@@ -1,14 +1,10 @@
 package com.nishan.application.client;
 
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.util.Scanner;
 
-import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
+import javax.crypto.spec.SecretKeySpec;
 
 import com.nishan.crypto.ApplicationUtil;
 import com.nishan.crypto.Constants;
@@ -23,7 +19,7 @@ public final class Client extends Crypto{
 	public static void main(String[] args) {
 		new Client().run();
 	}
-	
+
 	@Override
 	protected void run() {
 		init();
@@ -42,21 +38,71 @@ public final class Client extends Crypto{
 				break;
 			case 1:
 				generateKeyPair();
+				menu.set(1, "");
 				break;
 			case 2:
 				generateSecretKey(Constants.CLIENT_SECRET_KEY_LOCATION);
+				menu.set(2, "");
 				break;
 			case 3:
 				readSharedPublicKey();
+				menu.set(3, "");
 				break;
 			case 4:
 				sendSecretKey();
+				menu.set(4, "");
+				menu.set(5, "");
 				break;
+			case 5:
+				receiveSessionKey();
+				menu.set(3, "");
+				menu.set(4, "");
+				menu.set(5, "");
+				break;
+			case 6:
+				sendMessageToServer();
+				break;
+			case 7:
+				receiveMessageFromServer();
 			default:
 				break;
 			}
 			finish();
 			showMenu();
+		}
+	}
+
+	private void sendMessageToServer() {
+		try {
+			cipher = Cipher.getInstance(DES_CIPHER_ALGORITHM);
+			System.out.print("type :");
+			String srt = new Scanner(System.in).nextLine();
+			byte [] encodedStream = srt.getBytes();
+			ApplicationUtil.saveKeyToFileKey(Constants.CLIENT_PLAIN_TEXT_LOCATION, encodedStream);
+			if(sessionKey != null){
+				cipher.init(Cipher.ENCRYPT_MODE, sessionKey,ivParameterSpec);
+			}
+			byte[] encryptedText = cipher.doFinal(encodedStream);
+			ApplicationUtil.saveKeyToFileKey(Constants.ENCRYPTED_PLAIN_TEXT_LOCATION, encryptedText);
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	private void receiveMessageFromServer() {
+		try {
+			cipher = Cipher.getInstance(DES_CIPHER_ALGORITHM);
+			byte[] encryptedText = ApplicationUtil.readFileContent(Constants.ENCRYPTED_PLAIN_TEXT_LOCATION);
+			if(sessionKey != null){
+				cipher.init(Cipher.DECRYPT_MODE, sessionKey,ivParameterSpec);
+			}
+			byte[] decryptedText = cipher.doFinal(encryptedText);
+			String str = new String(decryptedText,"UTF-8");
+			System.out.print("received text: ");System.err.println(str);
+			ApplicationUtil.saveKeyToFileKey(Constants.CLIENT_PLAIN_TEXT_LOCATION, decryptedText);
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 	}
 
@@ -66,29 +112,24 @@ public final class Client extends Crypto{
 
 	private void sendSecretKey() {
 		try{
-		try {
-			cipher = Cipher.getInstance(RSA_ALGORITHM);
-		} catch (NoSuchPaddingException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
-		try {
 			cipher.init(Cipher.ENCRYPT_MODE, serverPublicKey);
-		} catch (InvalidKeyException e) {
-			e.printStackTrace();
-		}
-		try {
 			byte[] encryptedSecretKey = cipher.doFinal(secretKey.getEncoded());
 			ApplicationUtil.saveKeyToFileKey(Constants.ENCRYPTED_SESSION_KEY_LOCATION, encryptedSecretKey);
-		} catch (IllegalBlockSizeException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (BadPaddingException e) {
-			// TODO Auto-generated catch block
+			sessionKey = secretKey;
+		}catch(Exception e){
 			e.printStackTrace();
 		}
-		}catch(NoSuchAlgorithmException e){
-			System.out.println("Error");
+	}
+
+	public void receiveSessionKey() {
+		byte[] encryptedSessionKey = ApplicationUtil.readFileContent(Constants.ENCRYPTED_SESSION_KEY_LOCATION);
+		try {
+			cipher.init(Cipher.DECRYPT_MODE, privateKey);
+			byte [] decryptedSessionKey = cipher.doFinal(encryptedSessionKey);
+			ApplicationUtil.saveKeyToFileKey(Constants.CLIENT_SESSION_KEY_LOCATION, decryptedSessionKey);
+			sessionKey = new SecretKeySpec(decryptedSessionKey, DES_ALGORITHM);
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 	}
 
@@ -97,11 +138,16 @@ public final class Client extends Crypto{
 	}
 
 	@Override
-	protected void showMyMenu() {
-		System.out.println("3.Fetch Server public key");
-		System.out.println("4.Send secret key to Server");
-		System.out.println("5.Receive Session key of Client");
-		System.out.println("6.Type and hit ENTER_KEY to send message to Server");
-		System.out.println("7.Print message sent by Server");
+	protected void loadMyMenu() {
+		menu.add("3.Fetch Server public key");
+		//System.out.println("3.Fetch Server public key");
+		menu.add("4.Send secret key to Server");
+		//System.out.println("4.Send secret key to Server");
+		menu.add("5.Receive Session key of Client");
+		//System.out.println("5.Receive Session key of Client");
+		menu.add("6.Type and hit ENTER_KEY to send message to Server");
+		//System.out.println("6.Type and hit ENTER_KEY to send message to Server");
+		menu.add("7.Print message sent by Server");
+		//System.out.println("7.Print message sent by Server");
 	}
 }

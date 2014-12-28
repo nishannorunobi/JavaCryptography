@@ -3,9 +3,13 @@ package com.nishan.crypto;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.PrintWriter;
 import java.security.Key;
 import java.security.KeyFactory;
 import java.security.spec.X509EncodedKeySpec;
+
+import Decoder.BASE64Decoder;
+import Decoder.BASE64Encoder;
 
 public final class ApplicationUtil {
 
@@ -14,11 +18,11 @@ public final class ApplicationUtil {
 			byte[] content = encodedStream;
 			FileOutputStream fos = null;
 			fos = new FileOutputStream(fileName);
-			/*PrintWriter writer = new PrintWriter(fos);
+			//fos.write(encodedStream);
+			PrintWriter writer = new PrintWriter(fos);
 			String str = new BASE64Encoder().encode(content);
 			writer.write(str);
-			writer.close();*/
-			fos.write(encodedStream);
+			writer.close();
 			fos.close();
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -33,9 +37,9 @@ public final class ApplicationUtil {
 			FileInputStream fis = new FileInputStream(new File(fileName));
 			byte[] keyBytes = new byte[fis.available()];
 			fis.read(keyBytes);
-			/*String pubKey = new String(keyBytes, "UTF-8");
+			String pubKey = new String(keyBytes, "UTF-8");
 			BASE64Decoder decoder = new BASE64Decoder();
-			keyBytes = decoder.decodeBuffer(pubKey);*/
+			keyBytes = decoder.decodeBuffer(pubKey);
 			X509EncodedKeySpec spec = new X509EncodedKeySpec(keyBytes);
 			KeyFactory keyFactory = KeyFactory.getInstance(Crypto.RSA_ALGORITHM);
 			key = keyFactory.generatePublic(spec);
@@ -54,9 +58,9 @@ public final class ApplicationUtil {
 			keyBytes = new byte[fis.available()];
 			fis.read(keyBytes);
 
-			/*String content = new String(keyBytes, "UTF-8");
+			String content = new String(keyBytes, "UTF-8");
 			BASE64Decoder decoder = new BASE64Decoder();
-			keyBytes = decoder.decodeBuffer(content);*/
+			keyBytes = decoder.decodeBuffer(content);
 
 			fis.close();
 		} catch (Exception e) {
