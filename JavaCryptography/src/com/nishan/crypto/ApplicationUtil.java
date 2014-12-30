@@ -41,7 +41,7 @@ public final class ApplicationUtil {
 			BASE64Decoder decoder = new BASE64Decoder();
 			keyBytes = decoder.decodeBuffer(pubKey);
 			X509EncodedKeySpec spec = new X509EncodedKeySpec(keyBytes);
-			KeyFactory keyFactory = KeyFactory.getInstance(Crypto.RSA_ALGORITHM);
+			KeyFactory keyFactory = KeyFactory.getInstance(SecretKeyManager.RSA_ALGORITHM);
 			key = keyFactory.generatePublic(spec);
 			fis.close();
 		}catch(Exception e){
@@ -67,5 +67,32 @@ public final class ApplicationUtil {
 			e.printStackTrace();
 		}
 		return keyBytes;
+	}
+
+	public static void done(){
+		System.out.println("Done");
+		System.out.println();
+		clearConsole();
+	}
+
+	public final static void clearConsole()
+	{
+		try
+		{
+			System.out.flush();
+			final String os = System.getProperty("os.name");
+			if (os.contains("Windows"))
+			{
+				Runtime.getRuntime().exec("cls");
+			}
+			else
+			{
+				Runtime.getRuntime().exec("clear");
+			}
+		}
+		catch (final Exception e)
+		{
+			//  Handle any exceptions.
+		}
 	}
 }

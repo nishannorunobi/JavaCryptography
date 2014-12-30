@@ -1,123 +1,126 @@
 package com.nishan.application.server;
 
 import java.io.IOException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
-import java.util.Scanner;
 
-import javax.crypto.Cipher;
-import javax.crypto.spec.SecretKeySpec;
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 
+import com.nishan.crypto.ApplicationMenu;
 import com.nishan.crypto.ApplicationUtil;
 import com.nishan.crypto.Constants;
-import com.nishan.crypto.Crypto;
+import com.nishan.crypto.CryptographHelper;
+import com.nishan.crypto.IntegrityManager;
+import com.nishan.crypto.MessageManager;
+import com.nishan.crypto.PublicPrivateKeyGenerator;
+import com.nishan.crypto.SecretKeyManager;
+import com.nishan.crypto.Services;
 
-public final class Server extends Crypto{
+public final class Server extends CryptographHelper  implements Services{
 	protected PublicKey clientPublicKey;
+	public String PUBLIC_KEY_LOCATION;
+	private static final String PRIVATE_KEY_LOCATION = "..\\JavaCryptography\\server\\private.key";
+	private static final String SERVER_SESSION_KEY_LOCATION = "..\\JavaCryptography\\server\\session.key";
+	private static final String SECRET_KEY_LOCATION = "..\\JavaCryptography\\server\\server_secret.key";
+	private static Server server;
+	private ApplicationMenu menu;
+	public static Server getInstance(){
+		if(server == null){
+			server = new Server();
+		}
+		return server;
+	}
 
 	public Server() {
 
 	}
 
 	public static void main(String[] args) throws IOException {
-		new Server().run();
+		Server server = Server.getInstance();
+		server.startProgram();
 	}
 
 	@Override
-	protected void run() {
-		init();
-		int option = 100;
-		while(option > 0){
-			try {
-				String input = new Scanner(System.in).nextLine();
-				option = new Integer(input);
-			} catch (Exception e) {
-				option = 100;
-				System.out.println("Invalid input,try again!");
-			}
-			switch (option) {
-			case 0:
-				System.out.println("thanks");
-				break;
-			case 1:
-				generateKeyPair();
-				menu.set(1, "");
-				break;
-			case 2:
-				generateSecretKey(Constants.SERVER_SECRET_KEY_LOCATION);
-				menu.set(2, "");
-				break;
-			case 3:
-				readSharedPublicKey();
-				menu.set(3, "");
-				break;
-			case 4:
-				sendSecretKey();
-				menu.set(4, "");
-				menu.set(5, "");
-				break;
-			case 5:
-				receiveSessionKey();
-				menu.set(3, "");
-				menu.set(4, "");
-				menu.set(5, "");
-				break;
-			case 6:
-				putSendMessageToSend(Constants.SERVER_PLAIN_TEXT_LOCATION);
-				break;
-			case 7:
-				digestAndSendMessage(Constants.SERVER_DIGESTED_TEXT_LOCATION);
-				break;
-			case 8:
-				receiveMessageDigested(Constants.SERVER_PLAIN_TEXT_LOCATION,Constants.SERVER_DIGESTED_TEXT_LOCATION);
-				break;
-			default:
-				break;
-			}
-			finish();
-			showMenu();
-		}
+	protected void startProgram() {
+		secretKeyManager = new SecretKeyManager();
+		messageManager = new MessageManager();
+		integrityManager = new IntegrityManager(messageManager);;
+		PUBLIC_KEY_LOCATION = SERVER_PUBLIC_KEY_LOCATION;
+		menu = new ApplicationMenu();
+		menu.takeUserInput(server);
 	}
 
-	private void readSharedPublicKey() {
-		this.clientPublicKey = (PublicKey) ApplicationUtil.readSavedKey(Constants.CLIENT_PUBLIC_KEY_LOCATION);
+	public void readSharedPublicKey() {
+		this.clientPublicKey = (PublicKey) ApplicationUtil.readSavedKey(CLIENT_PUBLIC_KEY_LOCATION);
 	}
 
-	private void sendSecretKey() {
+	public void sendSecretKey() {
 		try{
-			cipher.init(Cipher.ENCRYPT_MODE, clientPublicKey);
-			byte[] encryptedSecretKey = cipher.doFinal(secretKey.getEncoded());
-			ApplicationUtil.saveKeyToFileKey(Constants.ENCRYPTED_SESSION_KEY_LOCATION, encryptedSecretKey);
-			sessionKey = secretKey;
-		}catch(Exception e){
-			e.printStackTrace();
+			secretKeyManager.encryptSecretKey(clientPublicKey);
+		} catch (InvalidKeyException e) {
+			System.err.println(e.getMessage());
+		} catch (NoSuchAlgorithmException e) {
+			//e.printStackTrace();
+			System.err.println(e.getMessage());
+		} catch (NoSuchPaddingException e) {
+			//e.printStackTrace();
+			System.err.println(e.getMessage());
+		} catch (IllegalBlockSizeException e) {
+			//e.printStackTrace();
+			System.err.println(e.getMessage());
+		} catch (BadPaddingException e) {
+			//e.printStackTrace();
+			System.err.println(e.getMessage());
 		}
+		secretKeyManager.saveEncryptedSecretKey(ENCRYPTED_SESSION_KEY_LOCATION);
+		sessionKey = secretKey;
 	}
 
-	private void generateKeyPair() {
-		generatePublicPrivateKey(Constants.SERVER_PUBLIC_KEY_LOCATION,Constants.SERVER_PRIVATE_KEY_LOCATION);
-	}
 
-	@Override
-	protected void loadMyMenu() {
-		menu.add("3.Fetch Client public key");
-		menu.add("4.Send secret key to Client");
-		menu.add("5.Receive Session key of Client");
-		menu.add("6.Input the message to send to Client");
-		menu.add("7.Digest and send the given message to Client");
-		menu.add("8.Recieve and print message sent by Client");
+	public void generateKeyPair() {
+		PublicPrivateKeyGenerator generator = new PublicPrivateKeyGenerator();
+		this.publicKey = generator.getPublicKey();
+		generator.savePublicKey(PUBLIC_KEY_LOCATION);
+		this.privateKey = generator.getPrivateKey();
+		generator.savePrivateKey(PRIVATE_KEY_LOCATION);
 	}
 
 	public void receiveSessionKey() {
-		byte[] encryptedSessionKey = ApplicationUtil.readFileContent(Constants.ENCRYPTED_SESSION_KEY_LOCATION);
-		try {
-			cipher.init(Cipher.DECRYPT_MODE, privateKey);
-			byte [] decryptedSessionKey = cipher.doFinal(encryptedSessionKey);
-			ApplicationUtil.saveKeyToFileKey(Constants.SERVER_SESSION_KEY_LOCATION, decryptedSessionKey);
-			sessionKey = new SecretKeySpec(decryptedSessionKey, DES_ALGORITHM);
-		} catch (Exception e) {
-			e.printStackTrace();
+		if(privateKey == null){
+			System.err.println("No private key found to decrypt");
+			return;
 		}
+		secretKeyManager.decryptSessionKey(privateKey);
+		secretKeyManager.saveDecryptedSessionKey(SERVER_SESSION_KEY_LOCATION);
+		this.sessionKey = secretKeyManager.getSessionKey();
+	}
 
+	@Override
+	public void generateSecretKey() {
+		generateSecretKey(SECRET_KEY_LOCATION);
+	}
+
+	@Override
+	public void putSendMessageToSend() {
+		putSendMessageToSend(Constants.SERVER_PLAIN_TEXT_LOCATION);
+	}
+
+	@Override
+	public void digestAndSendMessage() {
+		digestAndSendMessage(Constants.SERVER_DIGESTED_TEXT_LOCATION);
+	}
+
+	@Override
+	public void receiveMessageDigested() {
+		receiveMessageDigested(Constants.SERVER_PLAIN_TEXT_LOCATION,Constants.SERVER_DIGESTED_TEXT_LOCATION);
+	}
+
+	@Override
+	public void showMenu() {
+		menu.showServerMenu();
 	}
 
 
