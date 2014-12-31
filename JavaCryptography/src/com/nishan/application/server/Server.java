@@ -11,7 +11,6 @@ import javax.crypto.NoSuchPaddingException;
 
 import com.nishan.crypto.ApplicationMenu;
 import com.nishan.crypto.ApplicationUtil;
-import com.nishan.crypto.Constants;
 import com.nishan.crypto.CryptographHelper;
 import com.nishan.crypto.IntegrityManager;
 import com.nishan.crypto.MessageManager;
@@ -25,6 +24,8 @@ public final class Server extends CryptographHelper  implements Services{
 	private static final String PRIVATE_KEY_LOCATION = "..\\JavaCryptography\\server\\private.key";
 	private static final String SERVER_SESSION_KEY_LOCATION = "..\\JavaCryptography\\server\\session.key";
 	private static final String SECRET_KEY_LOCATION = "..\\JavaCryptography\\server\\server_secret.key";
+	private static final String PLAIN_TEXT_LOCATION = "..\\JavaCryptography\\server\\plain.txt";
+	private static final String DIGESTED_TEXT_LOCATION = "..\\JavaCryptography\\server\\digest.txt";
 	private static Server server;
 	private ApplicationMenu menu;
 	public static Server getInstance(){
@@ -105,17 +106,17 @@ public final class Server extends CryptographHelper  implements Services{
 
 	@Override
 	public void putSendMessageToSend() {
-		putSendMessageToSend(Constants.SERVER_PLAIN_TEXT_LOCATION);
+		putSendMessageToSend(PLAIN_TEXT_LOCATION);
 	}
 
 	@Override
 	public void digestAndSendMessage() {
-		digestAndSendMessage(Constants.SERVER_DIGESTED_TEXT_LOCATION);
+		digestAndSendMessage(DIGESTED_TEXT_LOCATION);
 	}
 
 	@Override
 	public void receiveMessageDigested() {
-		receiveMessageDigested(Constants.SERVER_PLAIN_TEXT_LOCATION,Constants.SERVER_DIGESTED_TEXT_LOCATION);
+		receiveMessageDigested(PLAIN_TEXT_LOCATION,DIGESTED_TEXT_LOCATION);
 	}
 
 	@Override
